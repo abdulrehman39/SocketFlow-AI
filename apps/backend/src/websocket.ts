@@ -12,11 +12,21 @@ export function setupWebSocket(io: SocketIOServer) {
       return next(new Error("Authentication error: Missing token"));
     }
     
-    // In a real application, verify JWT token here
-    // For MVP, we pass anything and mock user logic
-    socket.data.userId = "user_123";
-    
-    next();
+    try {
+      const apiKey = await prisma.apiKey.findUnique({
+        where: { key: token },
+        include: { user: true }
+      });
+
+      if (!apiKey) {
+        return next(new Error("Authentication error: Invalid API key"));
+      }
+
+      socket.data.userId = apiKey.user.id;
+      next();
+    } catch (error) {
+      return next(new Error("Authentication error: Server error"));
+    }
   });
 
   io.on("connection", (socket) => {

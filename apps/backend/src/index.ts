@@ -7,6 +7,9 @@ import { PrismaClient } from "@prisma/client";
 import { SendEventInputSchema } from "@socketflow/shared";
 import { setupWebSocket } from "./websocket";
 
+import { authRouter } from "./routes/auth";
+import { keysRouter } from "./routes/keys";
+
 dotenv.config();
 
 const app = express();
@@ -24,21 +27,34 @@ const prisma = new PrismaClient();
 app.use(cors());
 app.use(express.json());
 
-// Auth Middleware for REST API
-const requireApiKey = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+// Register routers
+app.use("/api/auth", authRouter);
+app.use("/api/keys", keysRouter);
+
+// Auth Middleware for REST API using API Keys
+const requireApiKey = async (req: any, res: any, next: any) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Missing or invalid API key" });
   }
   
-  const apiKey = authHeader.split(" ")[1];
+  const apiKeyStr = authHeader.split(" ")[1];
   
-  // In MVP: allow 'dev_secret_key' fallback
-  if (apiKey !== process.env.SOCKETFLOW_API_KEY && apiKey !== "dev_secret_key") {
-    console.warn("Invalid API key provided, bypassing for MVP.");
+  try {
+    const apiKey = await prisma.apiKey.findUnique({
+      where: { key: apiKeyStr },
+      include: { user: true }
+    });
+
+    if (!apiKey) {
+      return res.status(401).json({ error: "Invalid API key" });
+    }
+
+    req.user = apiKey.user;
+    next();
+  } catch (error) {
+    return res.status(500).json({ error: "Authentication error" });
   }
-  
-  next();
 };
 
 app.post("/api/event/:channel", requireApiKey, async (req, res) => {
