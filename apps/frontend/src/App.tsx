@@ -1,3 +1,4 @@
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { Overview } from "./pages/Overview";
@@ -21,12 +22,14 @@ function App() {
         <Route path="/signup" element={<Signup />} />
 
         {/* Protected Dashboard Routes */}
-        <Route path="/dashboard" element={<Layout />}>
-          <Route index element={<Overview />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Layout />}>
+            <Route index element={<Overview />} />
           <Route path="keys" element={<Keys />} />
           <Route path="channels" element={<Channels />} />
           <Route path="ai" element={<AiAssistant />} />
           <Route path="profile" element={<Profile />} />
+        </Route>
         </Route>
         
         <Route path="/docs" element={<Layout />}>

@@ -12,10 +12,34 @@ export function Signup() {
   const [name, setName] = useState("");
   const navigate = useNavigate();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock signup for MVP
-    navigate("/dashboard");
+    setLoading(true);
+    setError("");
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const response = await fetch(`${apiUrl}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Signup failed");
+      }
+
+      localStorage.setItem("token", data.token);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,6 +60,12 @@ export function Signup() {
 
         <Card className="bg-white p-8">
           <form onSubmit={handleSignup} className="space-y-5">
+            {error && (
+              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 mb-4">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-[13px] font-medium text-foreground">Full Name</label>
               <Input 
@@ -44,6 +74,7 @@ export function Signup() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
 
@@ -55,6 +86,7 @@ export function Signup() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             
@@ -66,11 +98,12 @@ export function Signup() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
 
-            <Button variant="primary" type="submit" className="w-full py-3 mt-2 font-semibold">
-              Create Account
+            <Button variant="primary" type="submit" className="w-full py-3 mt-2 font-semibold" disabled={loading}>
+              {loading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
 

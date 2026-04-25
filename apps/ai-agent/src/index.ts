@@ -4,7 +4,7 @@ import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = express();
-const port = process.env.AI_PORT || 3002;
+const port = process.env.PORT || process.env.AI_PORT || 3002;
 
 app.use(cors());
 app.use(express.json());
@@ -39,10 +39,16 @@ app.post('/api/chat', async (req, res) => {
     });
 
     // We expect history to be an array of { role: 'user' | 'assistant', content: string }
-    const formattedHistory = history ? history.map((msg: any) => ({
+    let formattedHistory = history ? history.map((msg: any) => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: msg.content }]
     })) : [];
+
+    // Gemini API requires the history to start with a 'user' role.
+    // If the first message is from the model (e.g. the initial greeting), we should remove it.
+    while (formattedHistory.length > 0 && formattedHistory[0].role === 'model') {
+      formattedHistory.shift();
+    }
 
     // Initialize chat
     const chat = model.startChat({

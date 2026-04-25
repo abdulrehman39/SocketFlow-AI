@@ -11,10 +11,34 @@ export function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login for MVP
-    navigate("/dashboard");
+    setLoading(true);
+    setError("");
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      localStorage.setItem("token", data.token);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,6 +59,12 @@ export function Login() {
 
         <Card className="bg-white p-8">
           <form onSubmit={handleLogin} className="space-y-5">
+            {error && (
+              <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100 mb-4">
+                {error}
+              </div>
+            )}
+            
             <div className="space-y-2">
               <label className="text-[13px] font-medium text-foreground">Email Address</label>
               <Input 
@@ -43,6 +73,7 @@ export function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             
@@ -57,11 +88,12 @@ export function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
 
-            <Button variant="primary" type="submit" className="w-full py-3 mt-2 font-semibold">
-              Sign In
+            <Button variant="primary" type="submit" className="w-full py-3 mt-2 font-semibold" disabled={loading}>
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
 
