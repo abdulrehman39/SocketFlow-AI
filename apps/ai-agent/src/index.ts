@@ -6,7 +6,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const app = express();
 const port = process.env.PORT || process.env.AI_PORT || 3002;
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
+app.options('*', cors());
 app.use(express.json());
 
 // Initialize Gemini SDK

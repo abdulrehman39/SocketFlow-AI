@@ -40,7 +40,8 @@ export function AiAssistant() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:3002/api/chat", {
+      const aiUrl = import.meta.env.VITE_AI_URL || "http://localhost:3002";
+      const response = await fetch(`${aiUrl}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

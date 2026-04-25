@@ -4,15 +4,28 @@ import { Card } from "../components/ui/Card";
 import { Activity, Zap, Users, ShieldAlert } from "lucide-react";
 
 export function Overview() {
-  const [metrics, setMetrics] = useState({ active: 0, msgs: 0 });
+  const [metrics, setMetrics] = useState({ active: 0, msgs: 0, keys: 0, channels: 0 });
+
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => ({
-        active: prev.active + Math.floor(Math.random() * 3),
-        msgs: prev.msgs + Math.floor(Math.random() * 10)
-      }));
-    }, 2000);
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/api/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setMetrics(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch stats", err);
+      }
+    };
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 10000); // refresh every 10s
     return () => clearInterval(interval);
   }, []);
 
@@ -30,10 +43,10 @@ export function Overview() {
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         {[
-          { label: "Active Connections", value: `1,2${metrics.active}`, icon: Users, color: "text-primary" },
-          { label: "Messages / min", value: `8,${metrics.msgs}42`, icon: Zap, color: "text-orange-500" },
-          { label: "Avg Latency", value: "24ms", icon: Activity, color: "text-emerald-500" },
-          { label: "Error Rate", value: "0.01%", icon: ShieldAlert, color: "text-rose-500" },
+          { label: "Active Connections", value: `${metrics.active}`, icon: Users, color: "text-primary" },
+          { label: "Messages / min", value: `${metrics.msgs}`, icon: Zap, color: "text-orange-500" },
+          { label: "Total API Keys", value: `${metrics.keys}`, icon: Activity, color: "text-emerald-500" },
+          { label: "Total Channels", value: `${metrics.channels}`, icon: ShieldAlert, color: "text-rose-500" },
         ].map((stat, i) => (
           <motion.div 
             key={i}
@@ -64,9 +77,14 @@ export function Overview() {
         </h2>
         <div className="flex-1 border border-border/60 bg-[#f9f9fb] rounded-2xl p-5 font-mono text-[13px] text-muted overflow-y-auto shadow-inner">
           <div className="space-y-3">
-             <p><span className="text-primary font-medium">[10:02:43]</span> <span className="text-slate-500 font-medium">SYS</span> Connection established (Node: sg-1)</p>
-             <p><span className="text-primary font-medium">[10:02:45]</span> <span className="text-emerald-500 font-medium">MSG</span> Event 'notification' delivered to channel 'global'</p>
-             <p><span className="text-primary font-medium">[10:02:50]</span> <span className="text-emerald-500 font-medium">MSG</span> Event 'payment' delivered to channel 'user_123'</p>
+             {metrics.channels > 0 ? (
+               <>
+                 <p><span className="text-primary font-medium">[10:02:43]</span> <span className="text-slate-500 font-medium">SYS</span> Connection established to real-time node</p>
+                 <p><span className="text-primary font-medium">[10:02:45]</span> <span className="text-emerald-500 font-medium">MSG</span> Platform successfully connected and active</p>
+               </>
+             ) : (
+               <p className="text-slate-400 italic">No events recorded yet. Connect a client SDK to start seeing real-time traffic.</p>
+             )}
           </div>
         </div>
       </Card>
