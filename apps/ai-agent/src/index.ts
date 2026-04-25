@@ -33,8 +33,8 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    const model = ai.getGenerativeModel({ 
-      model: 'gemini-1.5-flash-latest',
+    const model = ai.getGenerativeModel({
+      model: 'gemini-1.5-flash',
       systemInstruction: SYSTEM_INSTRUCTION
     });
 
