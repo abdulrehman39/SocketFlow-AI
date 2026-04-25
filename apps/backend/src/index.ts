@@ -10,6 +10,7 @@ import { setupWebSocket } from "./websocket";
 import { authRouter } from "./routes/auth";
 import { keysRouter } from "./routes/keys";
 import { statsRouter } from "./routes/stats";
+import { channelsRouter } from "./routes/channels";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/keys", keysRouter);
 app.use("/api/stats", statsRouter);
+app.use("/api/channels", channelsRouter);
 
 // Auth Middleware for REST API using API Keys
 const requireApiKey = async (req: any, res: any, next: any) => {
@@ -63,6 +65,25 @@ app.post("/api/event/:channel", requireApiKey, async (req, res) => {
   try {
     const { channel } = req.params;
     const body = SendEventInputSchema.parse(req.body);
+    const userId = (req as any).user.id;
+    
+    try {
+      await prisma.channel.upsert({
+        where: {
+          userId_name: {
+            userId: userId,
+            name: channel
+          }
+        },
+        update: {},
+        create: {
+          name: channel,
+          userId: userId
+        }
+      });
+    } catch (e) {
+      console.error("Failed to save channel on broadcast", e);
+    }
     
     // Broadcast to the channel using Socket.io Hub
     io.to(`channel_${channel}`).emit("message", {

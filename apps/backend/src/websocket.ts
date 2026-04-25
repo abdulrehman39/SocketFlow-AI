@@ -32,10 +32,30 @@ export function setupWebSocket(io: SocketIOServer) {
   io.on("connection", (socket) => {
     console.log(`[Socket] Client connected: ${socket.id} (User: ${socket.data.userId})`);
 
-    socket.on("subscribe", (data) => {
+    socket.on("subscribe", async (data) => {
       if (typeof data.channel === "string") {
         socket.join(`channel_${data.channel}`);
         console.log(`[Socket] ${socket.id} joined channel_${data.channel}`);
+        
+        try {
+          // Upsert the channel to the DB so it appears on the dashboard
+          await prisma.channel.upsert({
+            where: {
+              userId_name: {
+                userId: socket.data.userId,
+                name: data.channel
+              }
+            },
+            update: {}, // Do nothing if it exists
+            create: {
+              name: data.channel,
+              userId: socket.data.userId
+            }
+          });
+        } catch (e) {
+          console.error("Failed to save channel", e);
+        }
+
         // Optional: acknowledge subscription
         socket.emit("subscribed", { channel: data.channel });
       }
