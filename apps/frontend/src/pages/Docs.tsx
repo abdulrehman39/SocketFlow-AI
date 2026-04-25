@@ -29,7 +29,7 @@ export function Docs() {
             SocketFlow provides a lightweight, typed client for connecting to your channels on the frontend.
           </p>
           <div className="bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl p-4 font-mono text-[14px] text-foreground">
-            <span className="text-primary">npm</span> install @socketflow/client
+            <span className="text-primary">npm</span> install socket.io-client
           </div>
         </Card>
 
@@ -42,15 +42,18 @@ export function Docs() {
             Import the client, authenticate with your secret key, and subscribe to a channel.
           </p>
           <div className="bg-[#f5f5f7] border border-[#e5e5ea] rounded-xl p-4 font-mono text-[14px] text-foreground overflow-x-auto whitespace-pre">
-<span className="text-pink-500">import</span> {`{ SocketFlowClient }`} <span className="text-pink-500">from</span> <span className="text-emerald-500">'@socketflow/client'</span>;
+<span className="text-pink-500">import</span> {`{ io }`} <span className="text-pink-500">from</span> <span className="text-emerald-500">'socket.io-client'</span>;
 
-<span className="text-pink-500">const</span> client = <span className="text-pink-500">new</span> SocketFlowClient({`{
-  url: '${apiUrl}',
-  token: 'sk_live_YOUR_API_KEY'
+<span className="text-pink-500">const</span> socket = <span className="text-primary">io</span>(<span className="text-emerald-500">'{apiUrl}'</span>, {`{
+  auth: { token: 'sk_live_YOUR_API_KEY' }
 }`});
 
-client.<span className="text-primary">subscribe</span>(<span className="text-emerald-500">'notifications'</span>, (message) {`=>`} {`{
-  console.log('New message:', message);
+socket.<span className="text-primary">emit</span>(<span className="text-emerald-500">'subscribe'</span>, {`{ channel: 'notifications' }`});
+
+socket.<span className="text-primary">on</span>(<span className="text-emerald-500">'message'</span>, (data) {`=>`} {`{
+  if (data.channel === 'notifications') {
+    console.log('New message:', data);
+  }
 }`});
           </div>
         </Card>
