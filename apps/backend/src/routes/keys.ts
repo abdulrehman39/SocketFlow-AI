@@ -27,6 +27,7 @@ const requireUser = async (req: any, res: any, next: any) => {
 
 const createKeySchema = z.object({
   name: z.string().min(1),
+  endpointUrl: z.string().url().optional().or(z.literal("")),
 });
 
 router.get("/", requireUser, async (req: any, res: any) => {
@@ -43,7 +44,7 @@ router.get("/", requireUser, async (req: any, res: any) => {
 
 router.post("/", requireUser, async (req: any, res: any) => {
   try {
-    const { name } = createKeySchema.parse(req.body);
+    const { name, endpointUrl } = createKeySchema.parse(req.body);
 
     // Generate a secure API key
     const prefix = "sk_live_";
@@ -53,6 +54,7 @@ router.post("/", requireUser, async (req: any, res: any) => {
     const apiKey = await prisma.apiKey.create({
       data: {
         name,
+        endpointUrl: endpointUrl || null,
         key: keyString,
         userId: req.userId,
       },

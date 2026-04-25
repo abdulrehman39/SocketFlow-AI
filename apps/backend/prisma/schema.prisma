@@ -21,9 +21,10 @@ model User {
 
 model ApiKey {
   id        String   @id @default(cuid())
-  key       String   @unique
-  name      String
-  userId    String
+  key         String   @unique
+  name        String
+  endpointUrl String?
+  userId      String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 

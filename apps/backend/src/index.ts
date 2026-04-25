@@ -9,6 +9,7 @@ import { setupWebSocket } from "./websocket";
 
 import { authRouter } from "./routes/auth";
 import { keysRouter } from "./routes/keys";
+import { statsRouter } from "./routes/stats";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ app.use(express.json());
 // Register routers
 app.use("/api/auth", authRouter);
 app.use("/api/keys", keysRouter);
+app.use("/api/stats", statsRouter);
 
 // Auth Middleware for REST API using API Keys
 const requireApiKey = async (req: any, res: any, next: any) => {
